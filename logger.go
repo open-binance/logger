@@ -145,3 +145,31 @@ func Warn(msg string, fields ...zap.Field) {
 func Error(msg string, fields ...zap.Field) {
 	gLogger.Error(msg, fields...)
 }
+
+// NewFileLogger creates a new file logger
+func NewFileLogger(cfg FileConfig) (*zap.SugaredLogger, error) {
+	level, err := levelStringToZapLevel(cfg.Level)
+	if err != nil {
+		return nil, err
+	}
+	w := &lumberjack.Logger{
+		LocalTime:  cfg.LocalTime,
+		Compress:   cfg.Compress,
+		MaxSize:    cfg.MaxSize,
+		MaxAge:     cfg.MaxAge,
+		MaxBackups: cfg.MaxBackups,
+		Filename:   cfg.Filename,
+	}
+
+	encoderConf := zap.NewProductionEncoderConfig()
+	encoderConf.TimeKey = cfg.TimeKey
+	encoderConf.CallerKey = cfg.CallerKey
+	encoderConf.LevelKey = cfg.LevelKey
+	encoderConf.EncodeTime = zapcore.ISO8601TimeEncoder
+	encoderConf.EncodeLevel = zapcore.CapitalLevelEncoder
+	encoder := zapcore.NewConsoleEncoder(encoderConf)
+	core := zapcore.NewCore(encoder, zapcore.AddSync(w), level)
+	zaplogger := zap.New(zapcore.NewTee(core))
+
+	return zaplogger.Sugar(), nil
+}
