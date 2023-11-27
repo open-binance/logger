@@ -1,5 +1,7 @@
 package logger
 
+import "fmt"
+
 // CfgLog specifies configuration of the logger
 type CfgLog struct {
 	MaxSize    int    `json:"max_size" yaml:"max_size"`       // unit: MB
@@ -35,6 +37,15 @@ func NewDefaultCfg() CfgLog {
 		Path:       pathDefault,
 		Encoding:   encodingDefault,
 	}
+}
+
+func (cl *CfgLog) SetLevel(level string) error {
+	if level != gDebug && level != gInfo && level != gWarn && level != gError {
+		return fmt.Errorf("unknown level: %s, only support %s, %s, %s, %s", level, gDebug, gInfo, gWarn, gError)
+	}
+
+	cl.Level = level
+	return nil
 }
 
 func NewCfg(maxSize, maxAge, maxBackups int, level, path, encoding string) CfgLog {
